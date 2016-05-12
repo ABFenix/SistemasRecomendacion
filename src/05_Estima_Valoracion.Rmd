@@ -1,0 +1,182 @@
+---
+title: "05_Estima_Valoracion"
+author: "ana.morena"
+date: "12/05/2016"
+output: html_document
+---
+  
+
+Incorporo mis datos: mi usuario y mis valoraciones de películas.   
+
+```{r warning = FALSE, message=FALSE}
+source("incorporo_mis_datos.R")
+```
+
+----------------
+
+#### Consideraciones
+
+Procedo a almacenar en una tabla las valoraciones que voy a eliminar con la valoración real que se ha dado. A la misma añadiré 2 columnas; una con la estimación obtenida por filtrado colaborativo y otra con la estimación proporcionada por la técnica de imputación de valores pedidos.  
+
+---------
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+compara_val <- data.table(rbind(c(1000,449, 4), c(11,751,2), c(500,276,5), c(666,91,3), c(444,1483,2), c(666,193,4)))
+colnames(compara_val) <- c("user", "item", "rating_real")
+compara_val$rating_est2 <- compara_val$rating_est1 <- 0
+```
+
+#### ESTIMACION POR FILTRADO COLABORATIVO
+
+
+Función que estima la valoración del usuario/película pasados por parámetro.  
+
+El criterio de estimación que aplica es:  
+
+- Identifica los usuarios afines al usuario introducido por parámetro.  
+- Calcula la media de valoraciones de los usuarios afines, donde las valoraciones que tiene en cuenta son:  
+    - considera las valoraciones de los usuarios afines para la película pasada por parámetro
+    - si ninguno de los usuarios afines ha valorado esa película considera las valoraciones de los géneros a los que pertenece la película pasada por parámetro
+    
+Importante tener en cuenta que si la afinidad de un usuario con el usuario en cuestión es negativa, se invierten previamente las valoraciones de dicho usuario (afinmente contrario al usuario en cuestión).  
+
+**Comprobaciones**  
+
+La función avisa si el usuario ya ha valorado esa película; en ese caso no tiene sentido realizar una estimación.  
+
+```{r warning = FALSE, message=FALSE}
+source("estima_val_fcolabora.R")
+```
+
+------------
+
+##### Estimacion en base a la media de valoraciones a esa película por los usuarios afines  
+
+-------------------
+
+- Elimino la valoración realizada por el usuario 1000 de la película 449. Su valoración fue de 4.  
+
+- Elimino la valoración realizada por el usuario 11 de la película 751. Su valoración fue de 2.  
+
+- Elimino la valoración realizada por el usuario 500 de la película 276. Su valoración fue de 5.  
+
+------
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+val <- as.data.table(read.table("../dat/ml-100k/u.new_data", sep = "\t"))
+colnames(val) <- c("user", "item", "rating")
+val <- val[!(user ==1000 & item == 449),]
+val <- val[!(user ==11 & item == 751),]
+val <- val[!(user ==500 & item == 276),]
+write.table(val, file="../dat/ml-100k/u.new_data", sep = "\t", 
+            row.names = FALSE, col.names = FALSE)
+```
+
+
+Invoco ahora a la funcion `estima_val_fcolabora` para ver que valoración me proporciona el promedio de las valoraciones de usuarios afines.  
+
+La comparativa de valoraciones queda como sigue:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+compara_val[user==1000 & item== 449, ]$rating_est1 <- estima_val_fcolabora(1000,449)
+compara_val[user==11 & item== 751, ]$rating_est1 <- estima_val_fcolabora(11,751)
+compara_val[user==500 & item== 276, ]$rating_est1 <- estima_val_fcolabora(500,276)
+print(compara_val)
+```
+
+
+-------------------
+
+##### Estimacion en base a la media de valoraciones de los usuarios afines a los generos de esa pelicula
+
+---------------------
+
+- Elimino la valoración realizada por el usuario 666 de la película 91. Su valoración fue de 3.  
+
+- Elimino la valoración realizada por el usuario 444 de la película 1483. Su valoración fue de 2.  
+
+- Elimino la valoración realizada por el usuario 666 de la película 193. Su valoración fue de 4.  
+
+-------
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+val <- val[!(user ==666 & item == 91),]
+val <- val[!(user ==444 & item == 1483),]
+val <- val[!(user ==666 & item == 193),]
+write.table(val, file="../dat/ml-100k/u.new_data", sep = "\t", 
+            row.names = FALSE, col.names = FALSE)
+```
+
+Invoco ahora a la funcion `estima_val_fcolabora` para obtener las valoraciones en base al promedio de las valoraciones de usuarios afines. 
+
+
+La comparativa de valoraciones queda como sigue:  
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+compara_val[user== 666 & item== 91, ]$rating_est1 <- estima_val_fcolabora(666,91)
+compara_val[user== 444 & item== 1483, ]$rating_est1 <- estima_val_fcolabora(444,1483)
+compara_val[user== 666 & item== 193, ]$rating_est1 <- estima_val_fcolabora(666,193)
+print (compara_val)
+```
+
+-------------
+
+#### ESTIMACION POR TECNICAS DE IMPUTACION DE VALORES PERDIDOS
+
+Se utilizará el paquete softImpute. En caso de no tener instalado el paquete, proceder al lanzamiento de su instalación.  
+
+--------
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+source("incorporo_mis_datos.R")
+val <- as.data.table(read.table("../dat/ml-100k/u.new_data", sep = "\t"))
+colnames(val) <- c("user", "item", "rating")
+val[(user ==1000 & item == 449), rating:= NA]
+val[(user ==11 & item == 751), rating:= NA]
+val[(user ==500 & item == 276), rating:= NA]
+val[(user ==666 & item == 91), rating:= NA]
+val[(user ==444 & item == 1483), rating:= NA]
+val[(user ==666 & item == 193), rating:= NA]
+val_mx <- as.matrix(val)
+```
+
+```{r warning = FALSE, message=FALSE}
+library(softImpute)
+impute <- softImpute(val_mx, lambda=30, type="svd")
+val_complete <- data.table(complete(val_mx, impute))
+val_complete$rating <- round(val_complete$rating, digits = 0)
+
+```
+
+Comprobamos los valores que han sido asignados a los rating NA.  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+
+compara_val[user==1000 & item== 449, ]$rating_est2 <- val_complete[(user ==1000 & item == 449), rating]
+compara_val[user==11 & item== 751, ]$rating_est2 <- val_complete[(user ==11 & item == 751), rating]
+compara_val[user==500 & item== 276, ]$rating_est2 <- val_complete[(user ==500 & item == 276), rating]
+compara_val[user== 666 & item== 91, ]$rating_est2 <- val_complete[(user ==666 & item == 91), rating]
+compara_val[user== 444 & item== 1483, ]$rating_est2 <- val_complete[(user ==444 & item == 1483), rating]
+compara_val[user== 666 & item== 193, ]$rating_est2 <- val_complete[(user ==666 & item == 193), rating]
+
+print(compara_val)
+```
+
+---------
+
+#### CONCLUSIONES
+
+Se aprecia mayor divergencia entre las valoraciones reales y las estimaciones obtenidas por la técnica de imputación de valores perdidos. No obstante, es curioso observar que en 2 casos (de los 6 de ejemplo) han coincidido.  
+
+En el caso de la estimación por filtrado colaborativo, destaca el hecho de que se ha obtenido una correlación con las valoraciones reales del `r cor(compara_val$rating_real, compara_val$rating_est1)`. No solo es superior al 50% sino que se trata de una correlación positiva... 
+Se ha conseguido, en consecuencia, coherencia en la estimación de valoraciones.  
+
+-----
+
+Sin embargo, aunque como se ha comentado antes hay dos casos coincidentes entre la valoración real y la estimación por técnicas de imputación de valores perdidos, no hay correlación entre ambas valoraciones; correlación = `r cor(compara_val$rating_real, compara_val$rating_est2)`.  
+No hay coherencia, por tanto, en este último caso.   
+
+-----

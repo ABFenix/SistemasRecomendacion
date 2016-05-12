@@ -1,0 +1,223 @@
+---
+title: "01_Filtrado_Colaborativo"
+author: "ana.morena"
+date: "03/05/2016"
+output: html_document
+---
+
+### FUNCION RECOMENDACIÓN DE PELÍCULAS 
+
+**Consideraciones:**
+
+- Se entiende que puede considerarse una película como afin si tiene una valoración similar por, al menos, 10 usuarios.  
+
+- La función no es sensible a mayusculas/minusculas pero si a espacios y caracteres de puntuación.  
+
+- La afinidad es por valoración y signo de la misma.  No se considera película afín aquella que, aun teniendo una correlación alta, esta es opuesta (signo contrario).  
+
+
+**Comprobaciones de proceso:**  
+
+- La película debe encontrarse entre las valoradas.  
+
+
+```{r warning = FALSE, message=FALSE}
+source("peliculas_afines.R")
+```
+
+
+---------------------
+
+### COMPROBACIONES 
+
+**Vamos a validar**
+
+- Para las películas afines a la película dada, deben existir al menos 10 usuarios que hayan valorado ambas.  
+
+- El orden de la lista de películas afines es en función del nivel de afinidad (de mayor a menor).  
+   
+----------------------------------
+
+#### Funciones afines a la película "Godfather, The (1972)"
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+buscar_peli <- "Godfather, The (1972)"
+recomendaciones <- peliculas_afines(buscar_peli,10)
+print (recomendaciones)
+```
+
+------------------------
+
+Comprobamos el resultado de la primera película que da la función: `r recomendaciones[1]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[1]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[1], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+
+-----------
+
+Comprobamos el resultado de la segunda película que da la función: `r recomendaciones[2]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[2]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[2], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+-----------
+
+Comprobamos el resultado de la tercera película que da la función: `r recomendaciones[3]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[3]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[3], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+Se puede apreciar que la más afin es la primera película que ha proporcionado la función (de las 3 que se han comprobado), y lo mismo ocurre con la segunda y la tercera.  
+
+------
+
+
+#### Funciones afines a la película "Godfather: Part II, The (1974)"  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+buscar_peli <- "Godfather: Part II, The (1974)"
+recomendaciones <- peliculas_afines(buscar_peli,10)
+print (recomendaciones)
+```
+
+------------------------
+
+Comprobamos el resultado de la primera película que da la función: `r recomendaciones[1]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[1]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[1], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+
+-----------
+
+Comprobamos el resultado de la segunda película que da la función: `r recomendaciones[2]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[2]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[2], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+-----------
+
+Comprobamos el resultado de la tercera película que da la función: `r recomendaciones[3]`  
+
+- Usuarios que han puntuado la película "`r buscar_peli`" y la película "`r recomendaciones[3]`".  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+peliculas <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(peliculas) <- c("user", "item", "rating", "timestamp")
+tit_pelis <- as.data.table(read.table("../dat/ml-100k/u.item", sep = "|", quote=""))
+tit_pelis <- tit_pelis[,.(V1,V2)]
+colnames(tit_pelis) <- c("id","titulo")
+id_1 <- tit_pelis[titulo==buscar_peli, id]
+id_2 <- tit_pelis[titulo==recomendaciones[3], id]
+
+union <- merge(peliculas[item==id_1,], peliculas[item==id_2,], by="user")[,.(rating.x, rating.y)]
+```
+
+El número de usuarios que han valorado ambas películas es `r nrow(union)`. Se cumple la condición de que debe haber, al menos 10 valoraciones para ambas películas por el mismo usuario.
+
+La correlación existente entre las valoraciones de las películas es:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+cor(union)
+```
+
+Se puede apreciar que la más afin es la primera película que ha proporcionado la función (de las 3 que se han comprobado), y lo mismo ocurre con la segunda y la tercera.  
+
+------

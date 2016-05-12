@@ -1,0 +1,65 @@
+---
+title: "02_Recomendaciones_Mias"
+author: "ana.morena"
+date: "03/05/2016"
+output: html_document
+---
+  
+
+Incorporo mis datos: mi usuario y mis valoraciones de películas.   
+
+```{r warning = FALSE, message=FALSE}
+source("incorporo_mis_datos.R")
+```
+
+----------------
+
+
+### FUNCION AFINIDADES 
+
+Funcion que identifica los k usuarios más afines al usuario pasado por parámetro, bajo la condición de que hayan valorado, al menos, "d_nitems" comunes al usuario-parámetro.  
+
+
+```{r warning = FALSE, message=FALSE}
+source("usuarios_afines.R")
+```
+
+Identifico los 5 usuarios más afines a mi usuario (el usuario con código 1000), donde esos usuarios deben haber visto al menos 10 de las películas que he visto yo.
+
+Tendré en cuenta tanto los usuarios que tienen una afinidad positiva conmigo como los que tienen una afinidad negativa. En el caso de estos últimos, seleccionaré como películas recomendadas aquellas que hayan valorado con calificaciones muy bajas (rating valor 1 o 2)
+
+```{r warning = FALSE, message=FALSE}
+my_users <- as.data.table(usuarios_afines(1000, 5, 10))
+my_users$afinidad <- sign(my_users$dist)
+my_users <- my_users[,.(user, afinidad)]
+```
+
+------------
+
+
+### FUNCION RECOMENDACIONES  
+
+Para aquellos usuarios que, en principio, son afines a un usuario en cuestión, calculo las peliculas que recomiendan entre todos, en base a las películas afines a ellos.   
+
+
+Si un usuario tiene afinidad opuesta, invierto sus valoraciones: lo que para esos usuarios tiene un rating de 1 para mi (usuario_base) tendrán valoración 5 y asi sucesivamente.  
+
+Obviamente, deben recomendarse películas que no haya visto el usuario_base.  
+
+
+
+```{r warning = FALSE, message=FALSE}
+source("usuarios_recomiendan.R")
+```
+
+Las películas de valoración 4 y 5 que me recomiendan, ordenadas por valoración (de más valoración a menos) son:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+recomendaciones <- usuarios_recomiendan(my_users,1000,3)
+print(as.character(recomendaciones))
+```
+
+En la posible recomendación he indicado que al menos 3 usuarios deben haber dado el mismo rating (4 o 5) a la misma película para que me la recomienden. Teniendo en cuenta que solo he facilitado 5 usuarios afines, he sido bastante exigente.  
+
+---------------------
+

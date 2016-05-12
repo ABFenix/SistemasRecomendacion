@@ -1,0 +1,142 @@
+---
+title: "03_Descomposiciones_Matriciales"
+author: "ana.morena"
+date: "12/05/2016"
+output: html_document
+---
+
+### Interpretación de factores
+
+Se procede a interpretar los factores asociados a la gráfica siguiente, conseguida a través de la descomposición matricial, a través de seis factores, de las preferencias de usuarios por géneros de las películas.  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+library(reshape2)
+library(plyr)
+library(NMF)
+library(ggplot2)
+
+set.seed(897)
+pelis <- read.table("../dat/ml-100k/u.data", sep = "\t")
+generos <- read.table("../dat/ml-100k/u.item", sep = "|", quote = "")
+
+colnames(pelis) <- c("user", "movieid", "rating", "date")
+
+colnames(generos) <- c("movieid",
+                       "movietitle",
+                       "releasedate",
+                       "videoreleasedate",
+                       "IMDbURL",               
+                       "unknown",
+                       "Action",
+                       "Adventure",
+                       "Animation",
+                       "Children",
+                       "Comedy",
+                       "Crime",
+                       "Documentary",
+                       "Drama",
+                       "Fantasy",
+                       "Film-Noir",  
+                       "Horror",
+                       "Musical",
+                       "Mystery",
+                       "Romance",
+                       "Sci-Fi",
+                       "Thriller",
+                       "War",
+                       "Western")
+
+tmp <- merge(pelis, generos)
+tmp$movietitle <- tmp$releasedate <- tmp$videoreleasedate <- tmp$IMDbURL <- tmp$date <- NULL
+
+tmp <- melt(tmp, id.vars = c("user", "movieid", "rating"))
+tmp <- tmp[tmp$value == 1,]
+
+tmp <- ddply(tmp, .(user, variable), summarize, rating = mean(rating))
+
+tmp <- dcast(tmp, user ~ variable)
+m   <- as.matrix(tmp[,-1])
+rownames(m) <- tmp[,1]
+
+m[is.na(m)] <- 0
+
+res <- nmf(m, 6)
+
+
+h <- res@fit@H
+#h[h < 0.00001] <- 0
+
+h <- 100 * h / rowSums(h)
+
+h <- data.frame(h)
+h$factor <- 1:nrow(h)
+h <- melt(h, id.vars = "factor")
+
+ggplot(h, aes(x = variable, y = value)) + geom_bar(stat = "identity") + facet_grid(factor~.) + theme(axis.text.x = element_text(size=8,angle=45, hjust=1))
+```
+
+La descomposición matricial en 6 factores supone la clusterización de los clientes en 6 clusters en base a las preferencias que tienen a los géneros de las películas.  
+
+De acuerdo a esto, y de acuerdo a la gráfica obtenida (semilla 897) ...  
+
+- el primer factor (cluster 1) representa a los usuarios que tienen preferencia por los géneros **Animación y Children**, es decir, por las películas (Walt Disney, Marvel, etc).  
+
+- el cuarto factor (cluster 4) representa a los usuarios que se decantan por películas de **Film.Noir**.  
+
+- el quinto factor (cluster 5) se decanta por el género **Documentary** y, en menor medida pero también de manera representativa **Fantasy**.
+
+- el sexto factor (cluster 6) aglutina principalmente a los amantes del **Western**, aunque también les gusta los géneros **Fantasy y Musical**.  
+
+- los factores 2 y 3 representan a los usuarios que, si bien han valorado el resto de géneros, no destaca un género respecto al resto.   
+
+### Aplicación de distintos números de factores
+
+El efecto que produce el incremento en el número de factores es la clusterización en la diferenciación en clusteres distintos de los géneros que se han comentado previamente:
+
+- Animación   
+- Children  
+- Film.Noir  
+- Documentary  
+- Fantasy  
+- Musical  
+- Western  
+
+...e, incluso, la diferenciación de un género nuevo.  
+
+Así, por ejemplo, el fijar 7 factores significa que el género **Fantasy** pasa a destacarse en el cluster 4 y el género **Musical** en el cluster 5.  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+set.seed(897)
+res <- nmf(m, 7)
+
+h <- res@fit@H
+#h[h < 0.00001] <- 0
+
+h <- 100 * h / rowSums(h)
+
+h <- data.frame(h)
+h$factor <- 1:nrow(h)
+h <- melt(h, id.vars = "factor")
+
+ggplot(h, aes(x = variable, y = value)) + geom_bar(stat = "identity") + facet_grid(factor~.) + theme(axis.text.x = element_text(size=8,angle=45, hjust=1))
+```
+
+
+... o el fijar 9 factores significa que los géneros **Animación** y **Children** se destacan de manera independiente en 2 clusteres y empieza a resaltar el género **Horror**.  
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+set.seed(897)
+res <- nmf(m, 9)
+
+h <- res@fit@H
+#h[h < 0.00001] <- 0
+
+h <- 100 * h / rowSums(h)
+
+h <- data.frame(h)
+h$factor <- 1:nrow(h)
+h <- melt(h, id.vars = "factor")
+
+ggplot(h, aes(x = variable, y = value)) + geom_bar(stat = "identity") + facet_grid(factor~.) + theme(axis.text.x = element_text(size=8,angle=45, hjust=1))
+```

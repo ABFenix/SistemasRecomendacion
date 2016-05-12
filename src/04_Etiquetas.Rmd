@@ -1,0 +1,85 @@
+---
+title: "04_Etiquetas"
+author: "ana.morena"
+date: "05/05/2016"
+output: html_document
+---
+
+
+Me aseguro de que se encuentra la tabla de afinidades por género.   
+
+```{r warning = FALSE, message=FALSE}
+source("incorporo_mis_datos.R")
+```
+
+----------------
+
+### FUNCION DE RECOMENDACION DE UNA PELÍCULA NO VISTA HASTA EL MOMENTO
+
+```{r warning = FALSE, message=FALSE}
+source("cold_start.R")
+```
+
+### COMPROBACIONES   
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+m <- read.table("../dat/ml-100k/u.val_gen", sep = "|", header = TRUE)
+```
+
+#### Posibles usuarios para recomendar la película  "Matrix"  
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+posibles_clientes <- cold_start("Matrix",c("Action","Sci.Fi"))
+cat ("Posibles clientes de la película Matrix son:", posibles_clientes)
+```
+
+Comprobamos el resultado de valoraciones de los tres primeros  usuarios propuestos para recomendar la película en función de su género "Acción" y "Sci-Fi":    
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+rowMeans(m[posibles_clientes[1],c(3,17)])
+rowMeans(m[posibles_clientes[2],c(3,17)])
+rowMeans(m[posibles_clientes[3],c(3,17)])
+```
+
+Se aprecia que, además de haber valorado muy positivamente esos géneros, han sido propuestos por orden decreciente de valoración.  
+
+----------------
+
+#### Posibles usuarios para recomendar la película "Nanny McPhee (2005)"  
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+posibles_clientes <- cold_start("Nanny McPhee (2005)",c("Children","Comedy","Fantasy"))
+cat ("Posibles clientes de la película Nanny PcPhee son:", posibles_clientes)
+```
+
+Comprobamos el resultado de valoraciones de los tres primeros  usuarios propuestos para recomendar la película en función de su género "Children", "Comedy" y "Fantasy":    
+
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+rowMeans(m[posibles_clientes[1],c(6,7,11)])
+rowMeans(m[posibles_clientes[2],c(6,7,11)])
+rowMeans(m[posibles_clientes[3],c(6,7,11)])
+```
+
+También en este caso se aprecia que, además de haber valorado muy positivamente esos géneros, han sido propuestos por orden decreciente de valoración.  
+
+Además, aunque los géneros asignados a esta película y a la película Mary Poppins no coinciden exactamente (Mary Poppins tiene asignados los géneros "Children","Comedy","Musical"), el usuario 330 que valoró con un 5 la película Mary Poppins se encuentra también en el top 10 de los usuarios a los que habría que recomendar "Nanny McPhee (2005)"
+
+La película  Mary Poppins tiene id:  
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+tit_pelis <- read.table("../dat/ml-100k/u.item", sep = "|", quote = "")
+colnames(tit_pelis) <- c("id","titulo")
+tit_pelis <- data.table(tit_pelis)
+print(tit_pelis[419,])
+```
+.  
+La valoración del usuario 330 a la película Mary Poppins es:  
+
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+val <- as.data.table(read.table("../dat/ml-100k/u.data", sep = "\t"))
+colnames(val) <- c("user", "movieid", "rating", "timestamp")
+val <- within(val, rm(timestamp))
+print(val[val$user==330 & val$movieid == 419,])
+```
+
+-------------

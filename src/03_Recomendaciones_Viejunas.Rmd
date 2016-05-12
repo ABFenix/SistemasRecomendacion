@@ -1,0 +1,64 @@
+---
+title: "03_Recomendaciones_Viejunas"
+author: "ana.morena"
+date: "04/05/2016"
+output: html_document
+---
+
+Incorporo mis datos: mi usuario y mis valoraciones de películas.   
+
+```{r warning = FALSE, message=FALSE}
+source("incorporo_mis_datos.R")
+```
+
+----------------
+
+
+### FUNCION USUARIOS SEMEJANTES
+
+Funcion que identifica los usuarios semejantes al usuario pasado por parámetro, en base a edad, sexo y ocupación. Respecto a la edad, no exijo que tengan exactamente la misma edad; la condición es que tengan mi edad +- 5 años.  
+
+
+```{r warning = FALSE, message=FALSE}
+source("usuarios_semejantes.R")
+```
+
+Identifico todos los usuarios semejantes a mi usuario.
+
+Parto de la premisa de que todos tienen la misma afinidad (positiva).  
+
+```{r warning = FALSE, message=FALSE}
+similar_users <- as.data.table(usuarios_semejantes(1000))
+similar_users$afinidad <- 1
+similar_users <- similar_users[,.(user, afinidad)]
+```
+
+------------
+
+
+### FUNCION RECOMENDACIONES  
+
+Para aquellos usuarios que, en principio, son semejantes a un usuario en cuestión, calculo las peliculas que recomiendan entre todos, en base a las películas afines a ellos.   
+
+
+Obviamente, deben recomendarse películas que no haya visto el usuario_base.  
+
+
+
+```{r warning = FALSE, message=FALSE}
+source("usuarios_recomiendan.R")
+```
+
+Las películas de valoración 4 y 5 que me recomiendan, ordenadas por valoración (de más valoración a menos) son:  
+
+```{r echo=FALSE, warning = FALSE, message=FALSE}
+recomendaciones <- usuarios_recomiendan(similar_users,1000,3)
+print(as.character(recomendaciones))
+```
+
+He impuesto las mismas exigencias que en el ejercicio previo, es decir, he indicado que al menos 3 usuarios deben haber dado el mismo rating (4 o 5) a la misma película para que me la recomienden. 
+
+En este caso no me convencen las películas que me han recomendado... de hecho alguna de ellas ni la vería.  
+
+---------------------
+
