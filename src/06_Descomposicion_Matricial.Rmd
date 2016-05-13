@@ -1,5 +1,5 @@
 ---
-title: "03_Descomposiciones_Matriciales"
+title: "06_Descomposiciones_Matriciales"
 author: "ana.morena"
 date: "12/05/2016"
 output: html_document
